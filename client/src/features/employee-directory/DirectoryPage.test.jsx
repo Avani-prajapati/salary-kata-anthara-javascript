@@ -28,6 +28,12 @@ vi.mock('../../api/lookups.api', () => ({
   getJobLevels: vi.fn().mockResolvedValue([]),
 }));
 
+vi.mock('../employee-form/useDeleteEmployeeMutation', () => ({
+  useDeleteEmployeeMutation: vi.fn(() => ({
+    mutate: vi.fn(),
+  })),
+}));
+
 const DIRECTORY_ROW = {
   id: 1,
   firstName: 'Jane',
@@ -73,5 +79,23 @@ describe('viewing an employee record from the directory', () => {
     await userEvent.click(screen.getByRole('button', { name: /close employee detail/i }));
 
     expect(row).toHaveFocus();
+  });
+});
+
+describe('deleting an employee record', () => {
+  it('canceling the delete confirmation sends no request', async () => {
+    const { useDeleteEmployeeMutation } = await import('../employee-form/useDeleteEmployeeMutation');
+    const mockMutate = vi.fn();
+    useDeleteEmployeeMutation.mockReturnValueOnce({
+      mutate: mockMutate,
+    });
+
+    renderDirectoryWithOneEmployee();
+
+    await userEvent.click(screen.getByText('Jane Doe'));
+    await userEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+    expect(mockMutate).not.toHaveBeenCalled();
   });
 });

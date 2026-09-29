@@ -190,10 +190,10 @@ From the detail panel, the HR Manager clicks "Delete" and confirms, removing a r
 
 **Acceptance criteria**
 
-- [ ] **5.6.1** `DELETE /api/employees/:id` removes the record and returns `204`.
-- [ ] **5.6.2** `DELETE /api/employees/:id` for a non-existent ID returns `404` with the same error shape as [AC 5.3.1](#53-view-an-employees-detail).
-- [ ] **5.6.3** A confirmation dialog ("Delete Jane Doe's record? This cannot be undone.") is shown before the request fires; canceling it sends no request.
-- [ ] **5.6.4** After deletion, the row disappears from the directory and the ID is never reassigned to a future employee, per [invariant 4.6](#4-invariants).
+- [x] **5.6.1** `DELETE /api/employees/:id` removes the record and returns `204`.
+- [x] **5.6.2** `DELETE /api/employees/:id` for a non-existent ID returns `404` with the same error shape as [AC 5.3.1](#53-view-an-employees-detail).
+- [x] **5.6.3** A confirmation dialog ("Delete Jane Doe's record? This cannot be undone.") is shown before the request fires; canceling it sends no request.
+- [x] **5.6.4** After deletion, the row disappears from the directory and the ID is never reassigned to a future employee, per [invariant 4.6](#4-invariants).
 
 ### 5.7 View compensation statistics by dimension
 

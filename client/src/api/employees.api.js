@@ -15,3 +15,7 @@ export function createEmployee(payload) {
 export function updateEmployee(id, payload) {
   return request(`/api/employees/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 }
+
+export function deleteEmployee(id) {
+  return request(`/api/employees/${id}`, { method: 'DELETE' });
+}

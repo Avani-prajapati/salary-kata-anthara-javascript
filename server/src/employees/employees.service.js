@@ -1,6 +1,6 @@
 'use strict';
 
-const { findMany, findById, create, update } = require('./employees.repository');
+const { findMany, findById, create, update, remove } = require('./employees.repository');
 const { findCountryById } = require('../lookups/lookups.repository');
 const { NotFoundError, ValidationError } = require('../shared/errors');
 
@@ -192,4 +192,9 @@ function updateEmployee(db, id, patch) {
   return getEmployee(db, id);
 }
 
-module.exports = { listEmployees, getEmployee, createEmployee, updateEmployee };
+function deleteEmployee(db, id) {
+  getEmployee(db, id);
+  remove(db, id);
+}
+
+module.exports = { listEmployees, getEmployee, createEmployee, updateEmployee, deleteEmployee };

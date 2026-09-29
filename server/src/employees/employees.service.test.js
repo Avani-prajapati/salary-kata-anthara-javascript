@@ -1,7 +1,7 @@
 'use strict';
 
 const { describe, it, expect, beforeEach } = await import('vitest');
-const { getEmployee, createEmployee, updateEmployee } = require('./employees.service');
+const { getEmployee, createEmployee, updateEmployee, deleteEmployee } = require('./employees.service');
 const { NotFoundError, ValidationError } = require('../shared/errors');
 const { createConnection } = require('../db/connection');
 const { createSchema } = require('../db/schema');
@@ -165,5 +165,27 @@ describe('updating an existing employee', () => {
 
     expect(error).toBeInstanceOf(ValidationError);
     expect(error.fields).toEqual([{ field: 'email', message: 'email must be a valid email address' }]);
+  });
+});
+
+describe('deleting an employee', () => {
+  let db;
+  let employeeId;
+
+  beforeEach(() => {
+    db = createConnection(':memory:');
+    createSchema(db);
+    seedReferenceData(db);
+    employeeId = createEmployee(db, VALID_CREATE_INPUT).id;
+  });
+
+  it('deletes an existing employee by id and a subsequent getEmployee for that id returns no record', () => {
+    deleteEmployee(db, employeeId);
+
+    expect(() => getEmployee(db, employeeId)).toThrow(NotFoundError);
+  });
+
+  it('throws a NotFoundError when deleting an employee id that does not exist', () => {
+    expect(() => deleteEmployee(db, 999999)).toThrow(NotFoundError);
   });
 });

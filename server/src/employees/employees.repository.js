@@ -127,4 +127,8 @@ function create(db, row) {
   return result.lastInsertRowid;
 }
 
-module.exports = { findMany, findById, create, update };
+function remove(db, id) {
+  db.prepare('DELETE FROM employees WHERE id = ?').run(id);
+}
+
+module.exports = { findMany, findById, create, update, remove };

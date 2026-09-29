@@ -11,3 +11,7 @@ export function getEmployee(id) {
 export function createEmployee(payload) {
   return request('/api/employees', { method: 'POST', body: JSON.stringify(payload) });
 }
+
+export function updateEmployee(id, payload) {
+  return request(`/api/employees/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+}

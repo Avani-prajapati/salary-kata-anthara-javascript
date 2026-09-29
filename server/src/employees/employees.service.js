@@ -1,6 +1,6 @@
 'use strict';
 
-const { findMany, findById, create } = require('./employees.repository');
+const { findMany, findById, create, update } = require('./employees.repository');
 const { findCountryById } = require('../lookups/lookups.repository');
 const { NotFoundError, ValidationError } = require('../shared/errors');
 
@@ -77,8 +77,8 @@ function isPresent(value) {
   return value !== undefined && value !== null && value !== '';
 }
 
-function collectMissingFieldErrors(input) {
-  return REQUIRED_EMPLOYEE_FIELDS.filter((field) => !isPresent(input[field])).map((field) => ({
+function collectMissingFieldErrors(input, fieldsToCheck) {
+  return fieldsToCheck.filter((field) => !isPresent(input[field])).map((field) => ({
     field,
     message: `${field} is required`,
   }));
@@ -98,8 +98,8 @@ function collectFormatFieldErrors(input) {
   return errors;
 }
 
-function validateEmployeeInput(input) {
-  const missingFieldErrors = collectMissingFieldErrors(input);
+function validateFields(input, requiredFieldsToCheck) {
+  const missingFieldErrors = collectMissingFieldErrors(input, requiredFieldsToCheck);
   const fieldsAlreadyReported = new Set(missingFieldErrors.map((error) => error.field));
   const formatFieldErrors = collectFormatFieldErrors(input).filter(
     (error) => !fieldsAlreadyReported.has(error.field)
@@ -109,6 +109,46 @@ function validateEmployeeInput(input) {
   if (fields.length > 0) {
     throw new ValidationError(fields);
   }
+}
+
+function validateEmployeeInput(input) {
+  validateFields(input, REQUIRED_EMPLOYEE_FIELDS);
+}
+
+function fieldsPresentIn(patch) {
+  return REQUIRED_EMPLOYEE_FIELDS.filter((field) => Object.prototype.hasOwnProperty.call(patch, field));
+}
+
+function validateEmployeePatch(patch) {
+  validateFields(patch, fieldsPresentIn(patch));
+}
+
+function guardAgainstCountryChange(patch, currentCountryId) {
+  const isChangingCountry =
+    Object.prototype.hasOwnProperty.call(patch, 'countryId') && Number(patch.countryId) !== currentCountryId;
+
+  if (isChangingCountry) {
+    throw new ValidationError(
+      [{ field: 'countryId', message: 'Country cannot be changed on this endpoint' }],
+      'COUNTRY_CHANGE_NOT_SUPPORTED'
+    );
+  }
+}
+
+function toEmployeeUpdateRow(patch) {
+  const row = {};
+
+  fieldsPresentIn(patch)
+    .filter((field) => field !== 'salaryMajorUnits')
+    .forEach((field) => {
+      row[field] = patch[field];
+    });
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'salaryMajorUnits')) {
+    row.salaryMinorUnits = toSalaryMinorUnits(patch.salaryMajorUnits);
+  }
+
+  return row;
 }
 
 function resolveCurrencyCode(db, countryId) {
@@ -141,4 +181,15 @@ function createEmployee(db, input) {
   return getEmployee(db, id);
 }
 
-module.exports = { listEmployees, getEmployee, createEmployee };
+function updateEmployee(db, id, patch) {
+  const existing = getEmployee(db, id);
+
+  guardAgainstCountryChange(patch, existing.countryId);
+  validateEmployeePatch(patch);
+
+  update(db, id, toEmployeeUpdateRow(patch));
+
+  return getEmployee(db, id);
+}
+
+module.exports = { listEmployees, getEmployee, createEmployee, updateEmployee };

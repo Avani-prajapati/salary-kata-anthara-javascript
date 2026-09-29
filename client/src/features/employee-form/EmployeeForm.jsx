@@ -39,13 +39,14 @@ function LookupSelect({ name, label, options, control, rules }) {
   );
 }
 
-export function EmployeeForm({ lookups, onSubmit, submitLabel = 'Add employee', onCancel }) {
+export function EmployeeForm({ lookups, onSubmit, submitLabel, onCancel, initialValues }) {
   const {
     register,
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm({ defaultValues: DEFAULT_VALUES });
+  } = useForm({ defaultValues: { ...DEFAULT_VALUES, ...initialValues } });
+  const resolvedSubmitLabel = submitLabel ?? (initialValues ? 'Save changes' : 'Add employee');
 
   return (
     <Stack component="form" spacing={2} noValidate onSubmit={handleSubmit(onSubmit)}>
@@ -121,7 +122,7 @@ export function EmployeeForm({ lookups, onSubmit, submitLabel = 'Add employee', 
           </Button>
         )}
         <Button type="submit" variant="contained">
-          {submitLabel}
+          {resolvedSubmitLabel}
         </Button>
       </Stack>
     </Stack>

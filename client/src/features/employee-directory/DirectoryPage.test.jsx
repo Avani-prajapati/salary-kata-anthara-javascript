@@ -1,6 +1,7 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DirectoryPage } from './DirectoryPage';
 import { useEmployeesQuery } from './useEmployeesQuery';
 import { useEmployeeQuery } from '../employee-detail/useEmployeeQuery';
@@ -19,6 +20,12 @@ vi.mock('./DirectoryFilters', () => ({
 
 vi.mock('../employee-form/AddEmployeeButton', () => ({
   AddEmployeeButton: () => null,
+}));
+
+vi.mock('../../api/lookups.api', () => ({
+  getDepartments: vi.fn().mockResolvedValue([]),
+  getCountries: vi.fn().mockResolvedValue([]),
+  getJobLevels: vi.fn().mockResolvedValue([]),
 }));
 
 const DIRECTORY_ROW = {
@@ -41,7 +48,12 @@ function renderDirectoryWithOneEmployee() {
   useEmployeesQuery.mockReturnValue({ data: { items: [DIRECTORY_ROW], total: 1 }, isLoading: false, isError: false });
   useEmployeeQuery.mockReturnValue({ data: EMPLOYEE_DETAIL, isLoading: false, isError: false });
 
-  return render(<DirectoryPage />);
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <DirectoryPage />
+    </QueryClientProvider>
+  );
 }
 
 describe('viewing an employee record from the directory', () => {

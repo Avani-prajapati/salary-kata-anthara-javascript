@@ -1,7 +1,7 @@
 'use strict';
 
 const { describe, it, expect, beforeEach } = await import('vitest');
-const { getEmployee, createEmployee } = require('./employees.service');
+const { getEmployee, createEmployee, updateEmployee } = require('./employees.service');
 const { NotFoundError, ValidationError } = require('../shared/errors');
 const { createConnection } = require('../db/connection');
 const { createSchema } = require('../db/schema');
@@ -63,6 +63,12 @@ function seedReferenceData(db) {
     'DE',
     'EUR'
   );
+  db.prepare('INSERT INTO countries (id, name, iso_code, default_currency_code) VALUES (?, ?, ?, ?)').run(
+    2,
+    'United States',
+    'US',
+    'USD'
+  );
   db.prepare('INSERT INTO job_levels (id, code, label, rank) VALUES (?, ?, ?, ?)').run(1, 'L4', 'Staff', 4);
 }
 
@@ -121,5 +127,43 @@ describe('creating a new employee', () => {
     expect(error.fields.map((field) => field.field)).toEqual(
       expect.arrayContaining(['firstName', 'email', 'salaryMajorUnits'])
     );
+  });
+});
+
+describe('updating an existing employee', () => {
+  let db;
+  let employeeId;
+
+  beforeEach(() => {
+    db = createConnection(':memory:');
+    createSchema(db);
+    seedReferenceData(db);
+    employeeId = createEmployee(db, VALID_CREATE_INPUT).id;
+  });
+
+  it('applies a salary-only patch and returns the new value', () => {
+    const updated = updateEmployee(db, employeeId, { salaryMajorUnits: 120000 });
+
+    expect(updated.salaryMajorUnits).toBe(120000);
+    expect(getEmployee(db, employeeId).salaryMajorUnits).toBe(120000);
+  });
+
+  it('rejects a patch that changes countryId with a COUNTRY_CHANGE_NOT_SUPPORTED error', () => {
+    const error = captureThrownError(() => updateEmployee(db, employeeId, { countryId: 2 }));
+
+    expect(error).toBeInstanceOf(ValidationError);
+    expect(error.code).toBe('COUNTRY_CHANGE_NOT_SUPPORTED');
+    expect(error.fields).toEqual([{ field: 'countryId', message: 'Country cannot be changed on this endpoint' }]);
+  });
+
+  it('throws a NotFoundError when patching an employee id that does not exist', () => {
+    expect(() => updateEmployee(db, 999999, { salaryMajorUnits: 1000 })).toThrow(NotFoundError);
+  });
+
+  it('throws the same field-shaped error as create when the patched email is malformed', () => {
+    const error = captureThrownError(() => updateEmployee(db, employeeId, { email: 'not-an-email' }));
+
+    expect(error).toBeInstanceOf(ValidationError);
+    expect(error.fields).toEqual([{ field: 'email', message: 'email must be a valid email address' }]);
   });
 });

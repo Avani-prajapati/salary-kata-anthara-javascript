@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { EmployeeForm } from './EmployeeForm';
@@ -9,6 +9,8 @@ import { createEmployee } from '../../api/employees.api';
 vi.mock('../../api/employees.api', () => ({
   createEmployee: vi.fn(),
 }));
+
+afterEach(cleanup);
 
 const LOOKUPS = {
   departments: [{ id: 1, name: 'Engineering' }],
@@ -34,5 +36,32 @@ describe('submitting the add-employee form', () => {
 
     expect(await screen.findByText('First name is required')).toBeInTheDocument();
     expect(createEmployee).not.toHaveBeenCalled();
+  });
+});
+
+const EXISTING_EMPLOYEE = {
+  firstName: 'Jane',
+  lastName: 'Doe',
+  email: 'jane.doe@acme.example',
+  departmentId: 1,
+  countryId: 1,
+  jobLevelId: 1,
+  salaryMajorUnits: 95000,
+  hireDate: '2021-03-01',
+};
+
+describe('rendering the edit-employee form with initial values', () => {
+  it('pre-fills every field from the employee being edited', () => {
+    renderWithQueryClient(<EmployeeForm lookups={LOOKUPS} onSubmit={vi.fn()} initialValues={EXISTING_EMPLOYEE} />);
+
+    expect(screen.getByLabelText(/first name/i)).toHaveValue(EXISTING_EMPLOYEE.firstName);
+    expect(screen.getByLabelText(/last name/i)).toHaveValue(EXISTING_EMPLOYEE.lastName);
+    expect(screen.getByLabelText(/email/i)).toHaveValue(EXISTING_EMPLOYEE.email);
+    expect(screen.getByLabelText(/salary/i)).toHaveValue(EXISTING_EMPLOYEE.salaryMajorUnits);
+    expect(screen.getByLabelText(/hire date/i)).toHaveValue(EXISTING_EMPLOYEE.hireDate);
+    expect(screen.getByText(LOOKUPS.departments[0].name)).toBeInTheDocument();
+    expect(screen.getByText(LOOKUPS.countries[0].name)).toBeInTheDocument();
+    expect(screen.getByText(LOOKUPS.jobLevels[0].label)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
   });
 });

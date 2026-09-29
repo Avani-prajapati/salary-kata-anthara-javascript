@@ -10,10 +10,11 @@ class NotFoundError extends Error {
 }
 
 class ValidationError extends Error {
-  constructor(fields) {
+  constructor(fields, code = 'VALIDATION_ERROR') {
     super('Validation failed');
     this.name = 'ValidationError';
     this.fields = fields;
+    this.code = code;
   }
 }
 

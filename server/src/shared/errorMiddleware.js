@@ -13,7 +13,7 @@ function errorMiddleware(err, req, res, next) {
   }
 
   if (err instanceof ValidationError) {
-    res.status(422).json({ code: 'VALIDATION_ERROR', fields: err.fields });
+    res.status(422).json({ code: err.code, fields: err.fields });
     return;
   }
 

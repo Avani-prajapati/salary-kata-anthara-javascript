@@ -176,11 +176,11 @@ From the detail panel, the HR Manager clicks "Edit", changes one or more fields 
 
 **Acceptance criteria**
 
-- [ ] **5.5.1** `PATCH /api/employees/:id` accepts a partial payload of any editable field and returns the updated record with `200`.
-- [ ] **5.5.2** `country` cannot be changed via this endpoint if it would leave `currencyCode` inconsistent with [invariant 4.4](#4-invariants) — attempting to change `country` alone returns `422` with `{ code: "COUNTRY_CHANGE_NOT_SUPPORTED" }` (relocation is deferred, see [§9.3](#9-deferred-follow-ups-and-accepted-limits)).
-- [ ] **5.5.3** `PATCH /api/employees/:id` for a non-existent ID returns `404` with the same error shape as [AC 5.3.1](#53-view-an-employees-detail).
-- [ ] **5.5.4** The same validation rules as [AC 5.4.3](#54-add-a-new-employee) apply to changed fields.
-- [ ] **5.5.5** After a successful save, the detail panel and the directory row both reflect the new values without a manual refresh.
+- [x] **5.5.1** `PATCH /api/employees/:id` accepts a partial payload of any editable field and returns the updated record with `200`.
+- [x] **5.5.2** `country` cannot be changed via this endpoint if it would leave `currencyCode` inconsistent with [invariant 4.4](#4-invariants) — attempting to change `country` alone returns `422` with `{ code: "COUNTRY_CHANGE_NOT_SUPPORTED" }` (relocation is deferred, see [§9.3](#9-deferred-follow-ups-and-accepted-limits)).
+- [x] **5.5.3** `PATCH /api/employees/:id` for a non-existent ID returns `404` with the same error shape as [AC 5.3.1](#53-view-an-employees-detail).
+- [x] **5.5.4** The same validation rules as [AC 5.4.3](#54-add-a-new-employee) apply to changed fields.
+- [x] **5.5.5** After a successful save, the detail panel and the directory row both reflect the new values without a manual refresh.
 
 ### 5.6 Remove an employee record
 

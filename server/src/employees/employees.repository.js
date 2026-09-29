@@ -82,6 +82,28 @@ function findById(db, id) {
   return db.prepare(`${SELECT_EMPLOYEE_COLUMNS} WHERE e.id = ?`).get(id);
 }
 
+const UPDATE_COLUMN_BY_FIELD = {
+  firstName: 'first_name',
+  lastName: 'last_name',
+  email: 'email',
+  departmentId: 'department_id',
+  countryId: 'country_id',
+  jobLevelId: 'job_level_id',
+  salaryMinorUnits: 'salary_minor_units',
+  hireDate: 'hire_date',
+};
+
+function update(db, id, patch) {
+  const fields = Object.keys(patch).filter((field) => field in UPDATE_COLUMN_BY_FIELD);
+  const setClauses = [
+    ...fields.map((field) => `${UPDATE_COLUMN_BY_FIELD[field]} = ?`),
+    "updated_at = datetime('now')",
+  ];
+  const values = fields.map((field) => patch[field]);
+
+  db.prepare(`UPDATE employees SET ${setClauses.join(', ')} WHERE id = ?`).run(...values, id);
+}
+
 function create(db, row) {
   const result = db
     .prepare(
@@ -105,4 +127,4 @@ function create(db, row) {
   return result.lastInsertRowid;
 }
 
-module.exports = { findMany, findById, create };
+module.exports = { findMany, findById, create, update };

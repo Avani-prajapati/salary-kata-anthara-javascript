@@ -1,11 +1,20 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Drawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
 import CloseIcon from '@mui/icons-material/Close';
+import { getDepartments, getCountries, getJobLevels } from '../../api/lookups.api';
 import { LoadingState } from '../../shared/LoadingState';
 import { ErrorState } from '../../shared/ErrorState';
+import { EmployeeForm } from '../employee-form/EmployeeForm';
+import { useUpdateEmployeeMutation } from '../employee-form/useUpdateEmployeeMutation';
 import { useEmployeeQuery } from './useEmployeeQuery';
 
 const PANEL_WIDTH = 360;
@@ -25,8 +34,34 @@ const DETAIL_FIELDS = [
   { label: 'Hire date', getValue: (employee) => employee.hireDate },
 ];
 
+function EditEmployeeDialog({ employee, isOpen, onClose }) {
+  const { data: departments = [] } = useQuery({ queryKey: ['departments'], queryFn: getDepartments });
+  const { data: countries = [] } = useQuery({ queryKey: ['countries'], queryFn: getCountries });
+  const { data: jobLevels = [] } = useQuery({ queryKey: ['jobLevels'], queryFn: getJobLevels });
+  const updateEmployeeMutation = useUpdateEmployeeMutation(employee.id);
+
+  function handleSubmit(formValues) {
+    updateEmployeeMutation.mutate(formValues, { onSuccess: onClose });
+  }
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>Edit employee</DialogTitle>
+      <DialogContent>
+        <EmployeeForm
+          lookups={{ departments, countries, jobLevels }}
+          initialValues={employee}
+          onSubmit={handleSubmit}
+          onCancel={onClose}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function EmployeeDetailPanel({ employeeId, onClose }) {
   const { data: employee, isLoading, isError } = useEmployeeQuery(employeeId);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   return (
     <Drawer anchor="right" open={employeeId != null} onClose={onClose}>
@@ -54,9 +89,19 @@ export function EmployeeDetailPanel({ employeeId, onClose }) {
                 <Typography variant="body2">{getValue(employee)}</Typography>
               </Stack>
             ))}
+            <Button variant="outlined" onClick={() => setIsEditDialogOpen(true)}>
+              Edit
+            </Button>
           </Stack>
         )}
       </Box>
+      {employee && (
+        <EditEmployeeDialog
+          employee={employee}
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+        />
+      )}
     </Drawer>
   );
 }

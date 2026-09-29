@@ -229,10 +229,10 @@ The HR Manager opens "Headcount" and sees employee counts grouped by department,
 
 **Acceptance criteria**
 
-- [ ] **5.8.1** `GET /api/reports/headcount?groupBy=department|country|jobLevel` returns `{ groupValue, count }` for every non-empty group, summing to 10,000 (or the current employee count).
-- [ ] **5.8.2** `GET /api/reports/salary-distribution?currency=<code>` returns fixed-width salary bands and the count of employees in each, scoped to the requested currency only, per [invariant 4.3](#4-invariants).
-- [ ] **5.8.3** Requesting `salary-distribution` without a `currency` param defaults to the currency with the largest headcount and states which currency was used in the response.
-- [ ] **5.8.4** Both endpoints respond in under 500 ms against the full 10,000-row seeded dataset (performance floor, checked by a scoped test against the seeded DB).
+- [x] **5.8.1** `GET /api/reports/headcount?groupBy=department|country|jobLevel` returns `{ groupValue, count }` for every non-empty group, summing to 10,000 (or the current employee count).
+- [x] **5.8.2** `GET /api/reports/salary-distribution?currency=<code>` returns fixed-width salary bands and the count of employees in each, scoped to the requested currency only, per [invariant 4.3](#4-invariants).
+- [x] **5.8.3** Requesting `salary-distribution` without a `currency` param defaults to the currency with the largest headcount and states which currency was used in the response.
+- [x] **5.8.4** Both endpoints respond in under 500 ms against the full 10,000-row seeded dataset (performance floor, checked by a scoped test against the seeded DB).
 
 ### 5.9 Export the current view to CSV
 

@@ -3,7 +3,14 @@
 const { describe, it, expect, beforeEach } = await import('vitest');
 const { createConnection } = require('../db/connection');
 const { createSchema } = require('../db/schema');
-const { findMany, getCompensationStats } = require('./employees.repository');
+const { runSeed } = require('../seed/seed');
+const {
+  findMany,
+  getCompensationStats,
+  getHeadcount,
+  getSalaryDistribution,
+  getDefaultDistributionCurrency,
+} = require('./employees.repository');
 
 const BASE_PARAMS = { page: 1, pageSize: 20, sortBy: 'lastName', sortDir: 'asc' };
 
@@ -157,5 +164,169 @@ describe('computing compensation statistics grouped by dimension and currency', 
     expect(engineeringUsd.minMinor).toBe(10000);
     expect(engineeringUsd.maxMinor).toBe(30000);
     expect(engineeringUsd.avgMinor).toBe(20000);
+  });
+});
+
+describe('counting headcount per dimension group, independent of currency', () => {
+  let db;
+
+  beforeEach(() => {
+    db = createConnection(':memory:');
+    createSchema(db);
+    seedCompensationFixture(db);
+  });
+
+  it('sums headcount rows to the total employee count when grouping by department', () => {
+    const headcount = getHeadcount(db, 'department');
+    const { count: totalEmployees } = db.prepare('SELECT COUNT(*) AS count FROM employees').get();
+
+    expect(headcount.reduce((sum, row) => sum + row.count, 0)).toBe(totalEmployees);
+  });
+
+  it('blends currencies within a single group rather than splitting by currency', () => {
+    const headcount = getHeadcount(db, 'department');
+    const engineering = headcount.find((row) => row.groupLabel === 'Engineering');
+
+    expect(engineering.count).toBe(4);
+  });
+});
+
+function seedSalaryDistributionFixture(db) {
+  db.prepare('INSERT INTO departments (id, name) VALUES (?, ?)').run(1, 'Engineering');
+  db.prepare('INSERT INTO countries (id, name, iso_code, default_currency_code) VALUES (?, ?, ?, ?)').run(
+    1,
+    'United States',
+    'US',
+    'USD'
+  );
+  db.prepare('INSERT INTO countries (id, name, iso_code, default_currency_code) VALUES (?, ?, ?, ?)').run(
+    2,
+    'Germany',
+    'DE',
+    'EUR'
+  );
+  db.prepare('INSERT INTO job_levels (id, code, label, rank) VALUES (?, ?, ?, ?)').run(1, 'L1', 'Associate', 1);
+
+  const insertEmployee = db.prepare(`
+    INSERT INTO employees (
+      first_name, last_name, email, department_id, country_id, job_level_id,
+      currency_code, salary_minor_units, hire_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  let employeeCount = 0;
+  function insertEmployeeWithSalary(countryId, currencyCode, salaryMinorUnits) {
+    employeeCount += 1;
+    insertEmployee.run(
+      `First${employeeCount}`,
+      `Last${employeeCount}`,
+      `employee${employeeCount}@acme.example`,
+      1,
+      countryId,
+      1,
+      currencyCode,
+      salaryMinorUnits,
+      '2021-01-01'
+    );
+  }
+
+  [10000, 20000, 30000, 40000, 50000, 60000].forEach((salary) => insertEmployeeWithSalary(1, 'USD', salary));
+  [5000, 9000].forEach((salary) => insertEmployeeWithSalary(2, 'EUR', salary));
+}
+
+describe('bucketing salaries into a fixed-width, currency-scoped distribution', () => {
+  let db;
+
+  beforeEach(() => {
+    db = createConnection(':memory:');
+    createSchema(db);
+    seedSalaryDistributionFixture(db);
+  });
+
+  it('only counts employees paid in the requested currency', () => {
+    const buckets = getSalaryDistribution(db, 'EUR');
+
+    expect(buckets.reduce((sum, bucket) => sum + bucket.count, 0)).toBe(2);
+  });
+
+  it('resolves the default distribution currency to the one with the largest headcount', () => {
+    expect(getDefaultDistributionCurrency(db)).toBe('USD');
+  });
+
+  it('clamps a salary exactly at the maximum into the last bucket rather than a stray eleventh bucket', () => {
+    const buckets = getSalaryDistribution(db, 'USD');
+
+    expect(buckets.some((bucket) => bucket.bucketIndex === 10)).toBe(false);
+    expect(buckets.find((bucket) => bucket.bucketIndex === 9).count).toBe(1);
+  });
+
+  it('expresses bucket bounds in major units derived from the minor-unit range', () => {
+    const buckets = getSalaryDistribution(db, 'USD');
+    const firstBucket = buckets.find((bucket) => bucket.bucketIndex === 0);
+
+    expect(firstBucket.bucketMinMajor).toBe(100);
+    expect(firstBucket.bucketMaxMajor).toBe(150);
+  });
+});
+
+function seedUniformSalaryFixture(db) {
+  db.prepare('INSERT INTO departments (id, name) VALUES (?, ?)').run(1, 'Engineering');
+  db.prepare('INSERT INTO countries (id, name, iso_code, default_currency_code) VALUES (?, ?, ?, ?)').run(
+    1,
+    'United States',
+    'US',
+    'USD'
+  );
+  db.prepare('INSERT INTO job_levels (id, code, label, rank) VALUES (?, ?, ?, ?)').run(1, 'L1', 'Associate', 1);
+
+  const insertEmployee = db.prepare(`
+    INSERT INTO employees (
+      first_name, last_name, email, department_id, country_id, job_level_id,
+      currency_code, salary_minor_units, hire_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  [1, 2, 3].forEach((employeeNumber) =>
+    insertEmployee.run(
+      `First${employeeNumber}`,
+      `Last${employeeNumber}`,
+      `employee${employeeNumber}@acme.example`,
+      1,
+      1,
+      1,
+      'USD',
+      50000,
+      '2021-01-01'
+    )
+  );
+}
+
+describe('bucketing a currency where every employee earns the identical salary', () => {
+  it('returns a single bucket spanning that value instead of dividing by a zero-width range', () => {
+    const db = createConnection(':memory:');
+    createSchema(db);
+    seedUniformSalaryFixture(db);
+
+    const buckets = getSalaryDistribution(db, 'USD');
+
+    expect(buckets).toEqual([{ bucketIndex: 0, bucketMinMajor: 500, bucketMaxMajor: 500, count: 3 }]);
+  });
+});
+
+describe('reporting performance against the full seeded dataset', () => {
+  it('computes headcount and salary distribution well under the 500ms floor', async () => {
+    const db = createConnection(':memory:');
+    await runSeed(db);
+
+    const headcountStartedAt = Date.now();
+    const headcount = getHeadcount(db, 'department');
+    const headcountElapsedMs = Date.now() - headcountStartedAt;
+
+    const distributionStartedAt = Date.now();
+    const distribution = getSalaryDistribution(db, 'USD');
+    const distributionElapsedMs = Date.now() - distributionStartedAt;
+
+    expect(headcount.reduce((sum, row) => sum + row.count, 0)).toBe(10000);
+    expect(distribution.length).toBeGreaterThan(0);
+    expect(headcountElapsedMs).toBeLessThan(500);
+    expect(distributionElapsedMs).toBeLessThan(500);
   });
 });

@@ -187,4 +187,101 @@ function getCompensationStats(db, groupBy) {
     .all();
 }
 
-module.exports = { findMany, findById, create, update, remove, getCompensationStats };
+function getHeadcount(db, groupBy) {
+  const { column, table, labelColumn } = GROUP_BY_CONFIG[groupBy];
+
+  return db
+    .prepare(
+      `
+      SELECT
+        employees.${column} AS groupId,
+        g.${labelColumn} AS groupLabel,
+        COUNT(*) AS count
+      FROM employees
+      JOIN ${table} g ON g.id = employees.${column}
+      GROUP BY employees.${column}
+      ORDER BY g.${labelColumn}
+      `
+    )
+    .all();
+}
+
+const SALARY_DISTRIBUTION_BUCKET_COUNT = 10;
+const LAST_SALARY_DISTRIBUTION_BUCKET_INDEX = SALARY_DISTRIBUTION_BUCKET_COUNT - 1;
+const MINOR_UNITS_PER_MAJOR_UNIT = 100;
+
+function toMajorUnits(minorValue) {
+  return minorValue / MINOR_UNITS_PER_MAJOR_UNIT;
+}
+
+function getSingleBucketDistribution(db, currencyCode, salaryMinorUnits) {
+  const { count } = db
+    .prepare('SELECT COUNT(*) AS count FROM employees WHERE currency_code = ?')
+    .get(currencyCode);
+
+  return [
+    {
+      bucketIndex: 0,
+      bucketMinMajor: toMajorUnits(salaryMinorUnits),
+      bucketMaxMajor: toMajorUnits(salaryMinorUnits),
+      count,
+    },
+  ];
+}
+
+function getSalaryDistribution(db, currencyCode) {
+  const { min, max } = db
+    .prepare('SELECT MIN(salary_minor_units) AS min, MAX(salary_minor_units) AS max FROM employees WHERE currency_code = ?')
+    .get(currencyCode);
+
+  if (min === null) {
+    return [];
+  }
+
+  if (min === max) {
+    return getSingleBucketDistribution(db, currencyCode, min);
+  }
+
+  const bucketWidth = (max - min) / SALARY_DISTRIBUTION_BUCKET_COUNT;
+
+  const buckets = db
+    .prepare(
+      `
+      SELECT
+        MIN(CAST((salary_minor_units - ?) / ? AS INTEGER), ?) AS bucketIndex,
+        COUNT(*) AS count
+      FROM employees
+      WHERE currency_code = ?
+      GROUP BY bucketIndex
+      ORDER BY bucketIndex
+      `
+    )
+    .all(min, bucketWidth, LAST_SALARY_DISTRIBUTION_BUCKET_INDEX, currencyCode);
+
+  return buckets.map((bucket) => ({
+    bucketIndex: bucket.bucketIndex,
+    bucketMinMajor: toMajorUnits(min + bucket.bucketIndex * bucketWidth),
+    bucketMaxMajor: toMajorUnits(min + (bucket.bucketIndex + 1) * bucketWidth),
+    count: bucket.count,
+  }));
+}
+
+function getDefaultDistributionCurrency(db) {
+  const { currencyCode } = db
+    .prepare('SELECT currency_code AS currencyCode FROM employees GROUP BY currency_code ORDER BY COUNT(*) DESC LIMIT 1')
+    .get();
+
+  return currencyCode;
+}
+
+module.exports = {
+  findMany,
+  findById,
+  create,
+  update,
+  remove,
+  getCompensationStats,
+  getHeadcount,
+  getSalaryDistribution,
+  getDefaultDistributionCurrency,
+};

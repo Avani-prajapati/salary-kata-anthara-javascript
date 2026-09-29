@@ -1,6 +1,11 @@
 'use strict';
 
-const { getCompensationStats: getCompensationStatsRows } = require('../employees/employees.repository');
+const {
+  getCompensationStats: getCompensationStatsRows,
+  getHeadcount: getHeadcountRows,
+  getSalaryDistribution: getSalaryDistributionRows,
+  getDefaultDistributionCurrency,
+} = require('../employees/employees.repository');
 const { ValidationError } = require('../shared/errors');
 
 const GROUP_BY_VALUES = ['department', 'country', 'jobLevel'];
@@ -37,4 +42,26 @@ function getCompensationStats(db, groupBy) {
   return getCompensationStatsRows(db, groupBy).map(toCompensationStatDto);
 }
 
-module.exports = { getCompensationStats };
+function getHeadcount(db, groupBy) {
+  validateGroupBy(groupBy);
+
+  return getHeadcountRows(db, groupBy);
+}
+
+function toSalaryBucketDto(bucket) {
+  return {
+    bucketIndex: bucket.bucketIndex,
+    minMajorUnits: bucket.bucketMinMajor,
+    maxMajorUnits: bucket.bucketMaxMajor,
+    count: bucket.count,
+  };
+}
+
+function getSalaryDistribution(db, currencyCode) {
+  const resolvedCurrencyCode = currencyCode || getDefaultDistributionCurrency(db);
+  const buckets = getSalaryDistributionRows(db, resolvedCurrencyCode).map(toSalaryBucketDto);
+
+  return { currencyCode: resolvedCurrencyCode, buckets };
+}
+
+module.exports = { getCompensationStats, getHeadcount, getSalaryDistribution };

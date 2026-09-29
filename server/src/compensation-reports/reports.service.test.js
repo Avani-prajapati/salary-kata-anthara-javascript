@@ -1,7 +1,7 @@
 'use strict';
 
 const { describe, it, expect, beforeEach } = await import('vitest');
-const { getCompensationStats } = require('./reports.service');
+const { getCompensationStats, getSalaryDistribution } = require('./reports.service');
 const { ValidationError } = require('../shared/errors');
 const { createConnection } = require('../db/connection');
 const { createSchema } = require('../db/schema');
@@ -62,5 +62,71 @@ describe('mapping compensation statistics to major-unit fields', () => {
     expect(stat.minMajorUnits).toBe(95000);
     expect(stat.maxMajorUnits).toBe(95000);
     expect(stat.count).toBe(1);
+  });
+});
+
+function seedTwoCurrencyFixture(db) {
+  db.prepare('INSERT INTO departments (id, name) VALUES (?, ?)').run(1, 'Engineering');
+  db.prepare('INSERT INTO countries (id, name, iso_code, default_currency_code) VALUES (?, ?, ?, ?)').run(
+    1,
+    'United States',
+    'US',
+    'USD'
+  );
+  db.prepare('INSERT INTO countries (id, name, iso_code, default_currency_code) VALUES (?, ?, ?, ?)').run(
+    2,
+    'Germany',
+    'DE',
+    'EUR'
+  );
+  db.prepare('INSERT INTO job_levels (id, code, label, rank) VALUES (?, ?, ?, ?)').run(1, 'L1', 'Associate', 1);
+
+  const insertEmployee = db.prepare(`
+    INSERT INTO employees (
+      first_name, last_name, email, department_id, country_id, job_level_id,
+      currency_code, salary_minor_units, hire_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  let employeeCount = 0;
+  function insertEmployeeWithSalary(countryId, currencyCode, salaryMinorUnits) {
+    employeeCount += 1;
+    insertEmployee.run(
+      `First${employeeCount}`,
+      `Last${employeeCount}`,
+      `employee${employeeCount}@acme.example`,
+      1,
+      countryId,
+      1,
+      currencyCode,
+      salaryMinorUnits,
+      '2021-01-01'
+    );
+  }
+
+  [10000, 20000, 30000].forEach((salary) => insertEmployeeWithSalary(1, 'USD', salary));
+  insertEmployeeWithSalary(2, 'EUR', 9000);
+}
+
+describe('resolving the salary-distribution currency when none is requested', () => {
+  let db;
+
+  beforeEach(() => {
+    db = createConnection(':memory:');
+    createSchema(db);
+    seedTwoCurrencyFixture(db);
+  });
+
+  it('defaults to the currency with the largest headcount and states which one was used', () => {
+    const distribution = getSalaryDistribution(db, undefined);
+
+    expect(distribution.currencyCode).toBe('USD');
+    expect(distribution.buckets.reduce((sum, bucket) => sum + bucket.count, 0)).toBe(3);
+  });
+
+  it('scopes strictly to an explicitly requested currency', () => {
+    const distribution = getSalaryDistribution(db, 'EUR');
+
+    expect(distribution.currencyCode).toBe('EUR');
+    expect(distribution.buckets.reduce((sum, bucket) => sum + bucket.count, 0)).toBe(1);
   });
 });

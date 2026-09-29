@@ -82,6 +82,11 @@ function findById(db, id) {
   return db.prepare(`${SELECT_EMPLOYEE_COLUMNS} WHERE e.id = ?`).get(id);
 }
 
+function iterateMatching(db, { search, departmentId, countryId, jobLevelId }) {
+  const { clause, params } = buildFilterClause({ search, departmentId, countryId, jobLevelId });
+  return db.prepare(`${SELECT_EMPLOYEE_COLUMNS} ${clause}`).iterate(...params);
+}
+
 const UPDATE_COLUMN_BY_FIELD = {
   firstName: 'first_name',
   lastName: 'last_name',
@@ -277,6 +282,7 @@ function getDefaultDistributionCurrency(db) {
 module.exports = {
   findMany,
   findById,
+  iterateMatching,
   create,
   update,
   remove,

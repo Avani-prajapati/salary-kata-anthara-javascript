@@ -197,4 +197,4 @@ function deleteEmployee(db, id) {
   remove(db, id);
 }
 
-module.exports = { listEmployees, getEmployee, createEmployee, updateEmployee, deleteEmployee };
+module.exports = { listEmployees, getEmployee, createEmployee, updateEmployee, deleteEmployee, toOptionalId };

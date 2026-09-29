@@ -6,6 +6,7 @@ const { createSchema } = require('../db/schema');
 const { runSeed } = require('../seed/seed');
 const {
   findMany,
+  iterateMatching,
   getCompensationStats,
   getHeadcount,
   getSalaryDistribution,
@@ -75,6 +76,15 @@ describe('finding employees for the directory', () => {
 
     expect(items).toEqual([]);
     expect(total).toBe(4);
+  });
+
+  it('yields the same rows as an equivalent findMany call when iterating matching employees for export', () => {
+    const filters = { search: undefined, departmentId: 1, countryId: 2 };
+
+    const { items: paginatedItems } = findMany(db, { ...BASE_PARAMS, ...filters, pageSize: 100 });
+    const iteratedItems = [...iterateMatching(db, filters)];
+
+    expect(iteratedItems.map((item) => item.lastName)).toEqual(paginatedItems.map((item) => item.lastName));
   });
 });
 

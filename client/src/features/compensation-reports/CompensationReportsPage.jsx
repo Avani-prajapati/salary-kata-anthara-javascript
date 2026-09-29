@@ -14,6 +14,7 @@ import TableCell from '@mui/material/TableCell';
 import { EmptyState } from '../../shared/EmptyState';
 import { ErrorState } from '../../shared/ErrorState';
 import { LoadingState } from '../../shared/LoadingState';
+import { ExportCsvButton } from '../../shared/ExportCsvButton';
 import { useCompensationStatsQuery } from './useCompensationStatsQuery';
 
 const DEFAULT_GROUP_BY = 'department';
@@ -92,9 +93,12 @@ export function CompensationReportsPage() {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h5" component="h1">
-        Compensation Reports
-      </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Typography variant="h5" component="h1">
+          Compensation Reports
+        </Typography>
+        <ExportCsvButton path="/api/reports/compensation-stats/export" params={{ groupBy }} />
+      </Stack>
       <GroupBySelector groupBy={groupBy} onGroupByChange={(event) => setGroupBy(event.target.value)} />
       {isLoading && <LoadingState />}
       {isError && <ErrorState message="Could not load compensation statistics." />}

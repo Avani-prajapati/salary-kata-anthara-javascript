@@ -242,11 +242,11 @@ From the Directory, Compensation Reports, or Headcount view, clicking "Export CS
 
 **Acceptance criteria**
 
-- [ ] **5.9.1** `GET /api/employees/export?search&department&country&jobLevel` streams a CSV of every matching employee (unpaginated), honoring [invariant 4.5](#4-invariants).
-- [ ] **5.9.2** `GET /api/reports/compensation-stats/export?groupBy=...` and `GET /api/reports/headcount/export?groupBy=...` stream a CSV of the corresponding report.
-- [ ] **5.9.3** Every exported CSV has a header row naming each column, and monetary columns are exported in major units (e.g. `950000.00`) with the currency code as a separate column, not minor units.
-- [ ] **5.9.4** The response sets `Content-Disposition: attachment; filename="..."` so the browser downloads rather than navigates.
-- [ ] **5.9.5** Exporting the full 10,000-row directory (no filters) completes without the server holding the entire result set in memory at once (streamed row-by-row).
+- [x] **5.9.1** `GET /api/employees/export?search&department&country&jobLevel` streams a CSV of every matching employee (unpaginated), honoring [invariant 4.5](#4-invariants).
+- [x] **5.9.2** `GET /api/reports/compensation-stats/export?groupBy=...` and `GET /api/reports/headcount/export?groupBy=...` stream a CSV of the corresponding report.
+- [x] **5.9.3** Every exported CSV has a header row naming each column, and monetary columns are exported in major units (e.g. `950000.00`) with the currency code as a separate column, not minor units.
+- [x] **5.9.4** The response sets `Content-Disposition: attachment; filename="..."` so the browser downloads rather than navigates.
+- [x] **5.9.5** Exporting the full 10,000-row directory (no filters) completes without the server holding the entire result set in memory at once (streamed row-by-row).
 
 ## 6. NFRs & regulatory compliance
 

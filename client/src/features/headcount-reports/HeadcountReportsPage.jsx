@@ -14,6 +14,7 @@ import { getCountries } from '../../api/lookups.api';
 import { EmptyState } from '../../shared/EmptyState';
 import { ErrorState } from '../../shared/ErrorState';
 import { LoadingState } from '../../shared/LoadingState';
+import { ExportCsvButton } from '../../shared/ExportCsvButton';
 import { useHeadcountQuery } from './useHeadcountQuery';
 import { useSalaryDistributionQuery } from './useSalaryDistributionQuery';
 
@@ -142,9 +143,12 @@ export function HeadcountReportsPage() {
   return (
     <Stack spacing={4}>
       <Stack spacing={2}>
-        <Typography variant="h5" component="h1">
-          Headcount
-        </Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h5" component="h1">
+            Headcount
+          </Typography>
+          <ExportCsvButton path="/api/reports/headcount/export" params={{ groupBy }} />
+        </Stack>
         <GroupBySelector groupBy={groupBy} onGroupByChange={(event) => setGroupBy(event.target.value)} />
         {headcountQuery.isLoading && <LoadingState />}
         {headcountQuery.isError && <ErrorState message="Could not load headcount data." />}

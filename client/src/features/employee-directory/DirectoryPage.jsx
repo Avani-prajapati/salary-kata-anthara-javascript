@@ -5,6 +5,7 @@ import { DirectoryFilters } from './DirectoryFilters';
 import { DirectoryTable } from './DirectoryTable';
 import { EmployeeDetailPanel } from '../employee-detail/EmployeeDetailPanel';
 import { AddEmployeeButton } from '../employee-form/AddEmployeeButton';
+import { ExportCsvButton } from '../../shared/ExportCsvButton';
 
 const EMPTY_FILTERS = { search: '', departmentId: '', countryId: '', jobLevelId: '' };
 
@@ -31,7 +32,18 @@ export function DirectoryPage() {
         </Typography>
         <AddEmployeeButton />
       </Stack>
-      <DirectoryFilters filters={filters} onFiltersChange={setFilters} />
+      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+        <DirectoryFilters filters={filters} onFiltersChange={setFilters} />
+        <ExportCsvButton
+          path="/api/employees/export"
+          params={{
+            search: filters.search,
+            department: filters.departmentId,
+            country: filters.countryId,
+            jobLevel: filters.jobLevelId,
+          }}
+        />
+      </Stack>
       <DirectoryTable filters={filters} onSelectEmployee={openEmployee} />
       <EmployeeDetailPanel employeeId={selectedEmployeeId} onClose={closePanel} />
     </Stack>

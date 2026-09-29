@@ -17,14 +17,21 @@ const DEFAULT_VALUES = {
   hireDate: '',
 };
 
-function LookupSelect({ name, label, options, control, rules }) {
+function LookupSelect({ name, label, options, control, rules, required }) {
   return (
     <Controller
       name={name}
       control={control}
       rules={rules}
       render={({ field, fieldState }) => (
-        <TextField {...field} select label={label} error={Boolean(fieldState.error)} helperText={fieldState.error?.message}>
+        <TextField
+          {...field}
+          select
+          required={required}
+          label={label}
+          error={Boolean(fieldState.error)}
+          helperText={fieldState.error?.message}
+        >
           <MenuItem value="">
             <em>Select {label.toLowerCase()}</em>
           </MenuItem>
@@ -53,6 +60,7 @@ export function EmployeeForm({ lookups, onSubmit, submitLabel, onCancel, initial
       <TextField
         label="First name"
         autoComplete="given-name"
+        required
         error={Boolean(errors.firstName)}
         helperText={errors.firstName?.message}
         {...register('firstName', { required: 'First name is required' })}
@@ -60,6 +68,7 @@ export function EmployeeForm({ lookups, onSubmit, submitLabel, onCancel, initial
       <TextField
         label="Last name"
         autoComplete="family-name"
+        required
         error={Boolean(errors.lastName)}
         helperText={errors.lastName?.message}
         {...register('lastName', { required: 'Last name is required' })}
@@ -67,6 +76,7 @@ export function EmployeeForm({ lookups, onSubmit, submitLabel, onCancel, initial
       <TextField
         label="Email"
         autoComplete="email"
+        required
         error={Boolean(errors.email)}
         helperText={errors.email?.message}
         {...register('email', {
@@ -79,6 +89,7 @@ export function EmployeeForm({ lookups, onSubmit, submitLabel, onCancel, initial
         label="Department"
         options={lookups.departments}
         control={control}
+        required
         rules={{ required: 'Department is required' }}
       />
       <LookupSelect
@@ -86,6 +97,7 @@ export function EmployeeForm({ lookups, onSubmit, submitLabel, onCancel, initial
         label="Country"
         options={lookups.countries}
         control={control}
+        required
         rules={{ required: 'Country is required' }}
       />
       <LookupSelect
@@ -93,12 +105,14 @@ export function EmployeeForm({ lookups, onSubmit, submitLabel, onCancel, initial
         label="Job level"
         options={lookups.jobLevels}
         control={control}
+        required
         rules={{ required: 'Job level is required' }}
       />
       <TextField
         label="Salary"
         type="number"
         inputProps={{ step: '0.01' }}
+        required
         error={Boolean(errors.salaryMajorUnits)}
         helperText={errors.salaryMajorUnits?.message}
         {...register('salaryMajorUnits', {
@@ -111,6 +125,7 @@ export function EmployeeForm({ lookups, onSubmit, submitLabel, onCancel, initial
         label="Hire date"
         type="date"
         InputLabelProps={{ shrink: true }}
+        required
         error={Boolean(errors.hireDate)}
         helperText={errors.hireDate?.message}
         {...register('hireDate', { required: 'Hire date is required' })}

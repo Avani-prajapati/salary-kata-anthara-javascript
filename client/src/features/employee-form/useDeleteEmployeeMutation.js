@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteEmployee } from '../../api/employees.api';
+import { deleteEmployee } from '../employee-directory/employees.api';
 
 export function useDeleteEmployeeMutation(id) {
   const queryClient = useQueryClient();

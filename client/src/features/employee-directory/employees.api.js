@@ -1,4 +1,4 @@
-import { request, requestWithQuery } from './httpClient';
+import { request, requestWithQuery } from '../../api/httpClient';
 
 export function getEmployees(params) {
   return requestWithQuery('/api/employees', params);

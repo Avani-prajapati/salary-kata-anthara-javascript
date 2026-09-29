@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createEmployee } from '../../api/employees.api';
+import { createEmployee } from '../employee-directory/employees.api';
 
 export function useCreateEmployeeMutation() {
   const queryClient = useQueryClient();

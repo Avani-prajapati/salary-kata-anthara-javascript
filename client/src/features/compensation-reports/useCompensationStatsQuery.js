@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getCompensationStats } from '../../api/reports.api';
+import { getCompensationStats } from './reports.api';
 
 export function useCompensationStatsQuery(groupBy) {
   return useQuery({

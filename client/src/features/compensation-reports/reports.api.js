@@ -1,4 +1,4 @@
-import { requestWithQuery } from './httpClient';
+import { requestWithQuery } from '../../api/httpClient';
 
 export function getCompensationStats(groupBy) {
   return requestWithQuery('/api/reports/compensation-stats', { groupBy });

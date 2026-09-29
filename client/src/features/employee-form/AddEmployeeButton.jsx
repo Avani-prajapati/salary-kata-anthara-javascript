@@ -6,6 +6,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import { getDepartments, getCountries, getJobLevels } from '../../api/lookups.api';
 import { EmployeeForm } from './EmployeeForm';
+import { MutationErrorAlert } from './MutationErrorAlert';
 import { useCreateEmployeeMutation } from './useCreateEmployeeMutation';
 
 export function AddEmployeeButton() {
@@ -32,6 +33,7 @@ export function AddEmployeeButton() {
       <Dialog open={isDialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>Add employee</DialogTitle>
         <DialogContent>
+          <MutationErrorAlert error={createEmployeeMutation.isError ? createEmployeeMutation.error : null} />
           <EmployeeForm lookups={{ departments, countries, jobLevels }} onSubmit={handleSubmit} onCancel={closeDialog} />
         </DialogContent>
       </Dialog>

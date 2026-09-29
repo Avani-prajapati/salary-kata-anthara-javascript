@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEmployee } from '../../api/employees.api';
+import { getEmployee } from '../employee-directory/employees.api';
 
 export function useEmployeeQuery(employeeId) {
   return useQuery({

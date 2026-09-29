@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { EmployeeForm } from './EmployeeForm';
 import { useCreateEmployeeMutation } from './useCreateEmployeeMutation';
-import { createEmployee } from '../../api/employees.api';
+import { createEmployee } from '../employee-directory/employees.api';
 
-vi.mock('../../api/employees.api', () => ({
+vi.mock('../employee-directory/employees.api', () => ({
   createEmployee: vi.fn(),
 }));
 
@@ -63,5 +63,25 @@ describe('rendering the edit-employee form with initial values', () => {
     expect(screen.getByText(LOOKUPS.countries[0].name)).toBeInTheDocument();
     expect(screen.getByText(LOOKUPS.jobLevels[0].label)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
+  });
+});
+
+describe('marking required fields for assistive technology', () => {
+  it('flags every required text field with the native required attribute', () => {
+    renderWithQueryClient(<EmployeeForm lookups={LOOKUPS} onSubmit={vi.fn()} />);
+
+    expect(screen.getByLabelText(/first name/i)).toBeRequired();
+    expect(screen.getByLabelText(/last name/i)).toBeRequired();
+    expect(screen.getByLabelText(/email/i)).toBeRequired();
+    expect(screen.getByLabelText(/salary/i)).toBeRequired();
+    expect(screen.getByLabelText(/hire date/i)).toBeRequired();
+  });
+
+  it('flags every required lookup select as aria-required', () => {
+    renderWithQueryClient(<EmployeeForm lookups={LOOKUPS} onSubmit={vi.fn()} />);
+
+    expect(screen.getByLabelText(/^department/i)).toHaveAttribute('aria-required', 'true');
+    expect(screen.getByLabelText(/^country/i)).toHaveAttribute('aria-required', 'true');
+    expect(screen.getByLabelText(/^job level/i)).toHaveAttribute('aria-required', 'true');
   });
 });

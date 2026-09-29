@@ -12,16 +12,12 @@ const EMPTY_FILTERS = { search: '', departmentId: '', countryId: '', jobLevelId:
 export function DirectoryPage() {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
-  const triggerElementRef = useRef(null);
-
-  function openEmployee(employeeId, triggerElement) {
-    triggerElementRef.current = triggerElement;
-    setSelectedEmployeeId(employeeId);
-  }
+  const directoryTableRef = useRef(null);
 
   function closePanel() {
+    const employeeIdToRefocus = selectedEmployeeId;
     setSelectedEmployeeId(null);
-    triggerElementRef.current?.focus();
+    directoryTableRef.current?.focusRow(employeeIdToRefocus);
   }
 
   return (
@@ -44,7 +40,7 @@ export function DirectoryPage() {
           }}
         />
       </Stack>
-      <DirectoryTable filters={filters} onSelectEmployee={openEmployee} />
+      <DirectoryTable ref={directoryTableRef} filters={filters} onSelectEmployee={setSelectedEmployeeId} />
       <EmployeeDetailPanel employeeId={selectedEmployeeId} onClose={closePanel} />
     </Stack>
   );

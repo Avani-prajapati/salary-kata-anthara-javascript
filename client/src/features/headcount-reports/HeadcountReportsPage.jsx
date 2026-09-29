@@ -161,7 +161,7 @@ export function HeadcountReportsPage() {
         <Typography variant="h5" component="h2">
           Salary distribution
         </Typography>
-        <Typography id={CURRENCY_LABEL_ID} variant="body2" color="text.secondary">
+        <Typography id={CURRENCY_LABEL_ID} variant="body2" color="text.secondary" role="status" aria-live="polite">
           {resolvedCurrencyCode
             ? `Showing salaries in ${resolvedCurrencyCode}.`
             : 'Resolving the default currency…'}

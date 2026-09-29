@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getSalaryDistribution } from '../../api/reports.api';
+import { getSalaryDistribution } from '../compensation-reports/reports.api';
 
 export function useSalaryDistributionQuery(currencyCode) {
   return useQuery({

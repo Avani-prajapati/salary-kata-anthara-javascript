@@ -15,6 +15,7 @@ import { getDepartments, getCountries, getJobLevels } from '../../api/lookups.ap
 import { LoadingState } from '../../shared/LoadingState';
 import { ErrorState } from '../../shared/ErrorState';
 import { EmployeeForm } from '../employee-form/EmployeeForm';
+import { MutationErrorAlert } from '../employee-form/MutationErrorAlert';
 import { useUpdateEmployeeMutation } from '../employee-form/useUpdateEmployeeMutation';
 import { useDeleteEmployeeMutation } from '../employee-form/useDeleteEmployeeMutation';
 import { useEmployeeQuery } from './useEmployeeQuery';
@@ -46,15 +47,21 @@ function EditEmployeeDialog({ employee, isOpen, onClose }) {
     updateEmployeeMutation.mutate(formValues, { onSuccess: onClose });
   }
 
+  function handleClose() {
+    updateEmployeeMutation.reset();
+    onClose();
+  }
+
   return (
-    <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={isOpen} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle>Edit employee</DialogTitle>
       <DialogContent>
+        <MutationErrorAlert error={updateEmployeeMutation.isError ? updateEmployeeMutation.error : null} />
         <EmployeeForm
           lookups={{ departments, countries, jobLevels }}
           initialValues={employee}
           onSubmit={handleSubmit}
-          onCancel={onClose}
+          onCancel={handleClose}
         />
       </DialogContent>
     </Dialog>

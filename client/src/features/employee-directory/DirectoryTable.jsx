@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { EmptyState } from '../../shared/EmptyState';
 import { ErrorState } from '../../shared/ErrorState';
@@ -45,13 +45,21 @@ function NoRowsOverlay() {
 
 const DEFAULT_SORT_MODEL = [{ field: 'name', sort: 'asc' }];
 
-function focusableCellFor(target) {
-  return target.closest('[role="gridcell"], [role="rowheader"]');
+function firstFocusableCellIn(rowElement) {
+  return rowElement?.querySelector('[role="gridcell"], [role="rowheader"]') ?? null;
 }
 
-export function DirectoryTable({ filters, onSelectEmployee = () => {} }) {
+export const DirectoryTable = forwardRef(function DirectoryTable({ filters, onSelectEmployee = () => {} }, ref) {
+  const gridContainerRef = useRef(null);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: DEFAULT_PAGE_SIZE });
   const [sortModel, setSortModel] = useState(DEFAULT_SORT_MODEL);
+
+  useImperativeHandle(ref, () => ({
+    focusRow(employeeId) {
+      const rowElement = gridContainerRef.current?.querySelector(`[data-id="${employeeId}"]`);
+      firstFocusableCellIn(rowElement)?.focus();
+    },
+  }));
 
   const activeSort = sortModel[0];
   const queryParams = {
@@ -72,27 +80,29 @@ export function DirectoryTable({ filters, onSelectEmployee = () => {} }) {
   }
 
   return (
-    <DataGrid
-      autoHeight
-      rows={data?.items ?? []}
-      getRowId={(row) => row.id}
-      columns={COLUMNS}
-      loading={isLoading}
-      paginationMode="server"
-      sortingMode="server"
-      rowCount={data?.total ?? 0}
-      paginationModel={paginationModel}
-      onPaginationModelChange={setPaginationModel}
-      sortModel={sortModel}
-      onSortModelChange={setSortModel}
-      pageSizeOptions={PAGE_SIZE_OPTIONS}
-      slots={{ noRowsOverlay: NoRowsOverlay }}
-      onRowClick={(params, event) => onSelectEmployee(params.id, focusableCellFor(event.target))}
-      onCellKeyDown={(params, event) => {
-        if (event.key === 'Enter') {
-          onSelectEmployee(params.id, focusableCellFor(event.target));
-        }
-      }}
-    />
+    <div ref={gridContainerRef}>
+      <DataGrid
+        autoHeight
+        rows={data?.items ?? []}
+        getRowId={(row) => row.id}
+        columns={COLUMNS}
+        loading={isLoading}
+        paginationMode="server"
+        sortingMode="server"
+        rowCount={data?.total ?? 0}
+        paginationModel={paginationModel}
+        onPaginationModelChange={setPaginationModel}
+        sortModel={sortModel}
+        onSortModelChange={setSortModel}
+        pageSizeOptions={PAGE_SIZE_OPTIONS}
+        slots={{ noRowsOverlay: NoRowsOverlay }}
+        onRowClick={(params) => onSelectEmployee(params.id)}
+        onCellKeyDown={(params, event) => {
+          if (event.key === 'Enter') {
+            onSelectEmployee(params.id);
+          }
+        }}
+      />
+    </div>
   );
-}
+});

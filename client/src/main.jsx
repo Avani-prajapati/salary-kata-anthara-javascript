@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import { App } from './App';
 import { theme } from './shared/theme';
 import { DirectoryPage } from './features/employee-directory/DirectoryPage';
+import { CompensationReportsPage } from './features/compensation-reports/CompensationReportsPage';
 
 const queryClient = new QueryClient();
 
@@ -24,10 +25,7 @@ createRoot(document.getElementById('root')).render(
           <Routes>
             <Route path="/" element={<App />}>
               <Route index element={<DirectoryPage />} />
-              <Route
-                path="compensation-reports"
-                element={<PlaceholderPage title="Compensation Reports" />}
-              />
+              <Route path="compensation-reports" element={<CompensationReportsPage />} />
               <Route path="headcount" element={<PlaceholderPage title="Headcount" />} />
             </Route>
           </Routes>

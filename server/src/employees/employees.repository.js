@@ -131,4 +131,60 @@ function remove(db, id) {
   db.prepare('DELETE FROM employees WHERE id = ?').run(id);
 }
 
-module.exports = { findMany, findById, create, update, remove };
+const GROUP_BY_CONFIG = {
+  department: { column: 'department_id', table: 'departments', labelColumn: 'name' },
+  country: { column: 'country_id', table: 'countries', labelColumn: 'name' },
+  jobLevel: { column: 'job_level_id', table: 'job_levels', labelColumn: 'label' },
+};
+
+function getCompensationStats(db, groupBy) {
+  const { column, table, labelColumn } = GROUP_BY_CONFIG[groupBy];
+
+  return db
+    .prepare(
+      `
+      WITH ordered AS (
+        SELECT
+          ${column} AS group_id,
+          currency_code,
+          salary_minor_units,
+          ROW_NUMBER() OVER (PARTITION BY ${column}, currency_code ORDER BY salary_minor_units) AS rn,
+          COUNT(*) OVER (PARTITION BY ${column}, currency_code) AS cnt
+        FROM employees
+      ),
+      medians AS (
+        SELECT group_id, currency_code, AVG(salary_minor_units) AS median_minor
+        FROM ordered
+        WHERE rn IN ((cnt + 1) / 2, (cnt + 2) / 2)
+        GROUP BY group_id, currency_code
+      ),
+      aggregates AS (
+        SELECT
+          group_id,
+          currency_code,
+          COUNT(*) AS count,
+          AVG(salary_minor_units) AS avg_minor,
+          MIN(salary_minor_units) AS min_minor,
+          MAX(salary_minor_units) AS max_minor
+        FROM ordered
+        GROUP BY group_id, currency_code
+      )
+      SELECT
+        a.group_id AS groupId,
+        g.${labelColumn} AS groupLabel,
+        a.currency_code AS currencyCode,
+        a.count AS count,
+        a.avg_minor AS avgMinor,
+        m.median_minor AS medianMinor,
+        a.min_minor AS minMinor,
+        a.max_minor AS maxMinor
+      FROM aggregates a
+      JOIN medians m ON m.group_id = a.group_id AND m.currency_code = a.currency_code
+      JOIN ${table} g ON g.id = a.group_id
+      ORDER BY g.${labelColumn}, a.currency_code
+      `
+    )
+    .all();
+}
+
+module.exports = { findMany, findById, create, update, remove, getCompensationStats };

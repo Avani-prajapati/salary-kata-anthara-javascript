@@ -3,7 +3,7 @@
 const { describe, it, expect, beforeEach } = await import('vitest');
 const { createConnection } = require('../db/connection');
 const { createSchema } = require('../db/schema');
-const { findMany } = require('./employees.repository');
+const { findMany, getCompensationStats } = require('./employees.repository');
 
 const BASE_PARAMS = { page: 1, pageSize: 20, sortBy: 'lastName', sortDir: 'asc' };
 
@@ -68,5 +68,94 @@ describe('finding employees for the directory', () => {
 
     expect(items).toEqual([]);
     expect(total).toBe(4);
+  });
+});
+
+function seedCompensationFixture(db) {
+  const insertDepartment = db.prepare('INSERT INTO departments (id, name) VALUES (?, ?)');
+  insertDepartment.run(1, 'Engineering');
+  insertDepartment.run(2, 'Sales');
+
+  const insertCountry = db.prepare(
+    'INSERT INTO countries (id, name, iso_code, default_currency_code) VALUES (?, ?, ?, ?)'
+  );
+  insertCountry.run(1, 'United States', 'US', 'USD');
+  insertCountry.run(2, 'Germany', 'DE', 'EUR');
+
+  const insertJobLevel = db.prepare('INSERT INTO job_levels (id, code, label, rank) VALUES (?, ?, ?, ?)');
+  insertJobLevel.run(1, 'L1', 'Associate', 1);
+
+  const insertEmployee = db.prepare(`
+    INSERT INTO employees (
+      first_name, last_name, email, department_id, country_id, job_level_id,
+      currency_code, salary_minor_units, hire_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  let employeeCount = 0;
+  function insertEmployeeInGroup(departmentId, countryId, currencyCode, salaryMinorUnits) {
+    employeeCount += 1;
+    insertEmployee.run(
+      `First${employeeCount}`,
+      `Last${employeeCount}`,
+      `employee${employeeCount}@acme.example`,
+      departmentId,
+      countryId,
+      1,
+      currencyCode,
+      salaryMinorUnits,
+      '2021-01-01'
+    );
+  }
+
+  [10000, 30000, 20000].forEach((salaryMinorUnits) => insertEmployeeInGroup(1, 1, 'USD', salaryMinorUnits));
+  [10000, 20000, 30000, 40000].forEach((salaryMinorUnits) => insertEmployeeInGroup(2, 1, 'USD', salaryMinorUnits));
+  insertEmployeeInGroup(1, 2, 'EUR', 50000);
+}
+
+describe('computing compensation statistics grouped by dimension and currency', () => {
+  let db;
+
+  beforeEach(() => {
+    db = createConnection(':memory:');
+    createSchema(db);
+    seedCompensationFixture(db);
+  });
+
+  function findStatRow(stats, groupLabel, currencyCode) {
+    return stats.find((row) => row.groupLabel === groupLabel && row.currencyCode === currencyCode);
+  }
+
+  it("computes an odd-sized group's median as its literal middle value", () => {
+    const stats = getCompensationStats(db, 'department');
+    const engineeringUsd = findStatRow(stats, 'Engineering', 'USD');
+
+    expect(engineeringUsd.count).toBe(3);
+    expect(engineeringUsd.medianMinor).toBe(20000);
+  });
+
+  it("computes an even-sized group's median as the average of its two middle values", () => {
+    const stats = getCompensationStats(db, 'department');
+    const salesUsd = findStatRow(stats, 'Sales', 'USD');
+
+    expect(salesUsd.count).toBe(4);
+    expect(salesUsd.medianMinor).toBe(25000);
+  });
+
+  it('keeps a department present in two countries with two currencies as two separate rows, never blended', () => {
+    const stats = getCompensationStats(db, 'department');
+    const engineeringRows = stats.filter((row) => row.groupLabel === 'Engineering');
+
+    expect(engineeringRows.map((row) => row.currencyCode).sort()).toEqual(['EUR', 'USD']);
+    expect(findStatRow(stats, 'Engineering', 'EUR').count).toBe(1);
+    expect(findStatRow(stats, 'Engineering', 'USD').count).toBe(3);
+  });
+
+  it('computes min, max, and average alongside the median for the same group', () => {
+    const stats = getCompensationStats(db, 'department');
+    const engineeringUsd = findStatRow(stats, 'Engineering', 'USD');
+
+    expect(engineeringUsd.minMinor).toBe(10000);
+    expect(engineeringUsd.maxMinor).toBe(30000);
+    expect(engineeringUsd.avgMinor).toBe(20000);
   });
 });

@@ -215,11 +215,11 @@ The HR Manager opens "Compensation Reports" and sees average, median, minimum, a
 
 **Acceptance criteria**
 
-- [ ] **5.7.1** `GET /api/reports/compensation-stats?groupBy=department|country|jobLevel` returns one row per (grouping value × currency) pair with `count`, `avgMinor`, `medianMinor`, `minMinor`, `maxMinor`.
-- [ ] **5.7.2** No row ever mixes two currencies within its stats, per [invariant 4.3](#4-invariants) — a department present in two countries with two currencies produces two rows.
-- [ ] **5.7.3** Switching the "Group by" control re-queries and re-renders the table without a full page reload.
-- [ ] **5.7.4** `groupBy` values other than `department`, `country`, or `jobLevel` return `422` with `{ code: "VALIDATION_ERROR" }`.
-- [ ] **5.7.5** A group with zero employees is omitted from the response rather than returned with null/zero stats.
+- [x] **5.7.1** `GET /api/reports/compensation-stats?groupBy=department|country|jobLevel` returns one row per (grouping value × currency) pair with `count`, `avgMinor`, `medianMinor`, `minMinor`, `maxMinor`.
+- [x] **5.7.2** No row ever mixes two currencies within its stats, per [invariant 4.3](#4-invariants) — a department present in two countries with two currencies produces two rows.
+- [x] **5.7.3** Switching the "Group by" control re-queries and re-renders the table without a full page reload.
+- [x] **5.7.4** `groupBy` values other than `department`, `country`, or `jobLevel` return `422` with `{ code: "VALIDATION_ERROR" }`.
+- [x] **5.7.5** A group with zero employees is omitted from the response rather than returned with null/zero stats.
 
 ### 5.8 View headcount and salary distribution
 

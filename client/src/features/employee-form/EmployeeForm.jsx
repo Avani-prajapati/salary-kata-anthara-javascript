@@ -111,7 +111,7 @@ export function EmployeeForm({ lookups, onSubmit, submitLabel, onCancel, initial
       <TextField
         label="Salary"
         type="number"
-        inputProps={{ step: '0.01' }}
+        slotProps={{ htmlInput: { step: '0.01' } }}
         required
         error={Boolean(errors.salaryMajorUnits)}
         helperText={errors.salaryMajorUnits?.message}
@@ -124,7 +124,7 @@ export function EmployeeForm({ lookups, onSubmit, submitLabel, onCancel, initial
       <TextField
         label="Hire date"
         type="date"
-        InputLabelProps={{ shrink: true }}
+        slotProps={{ inputLabel: { shrink: true } }}
         required
         error={Boolean(errors.hireDate)}
         helperText={errors.hireDate?.message}

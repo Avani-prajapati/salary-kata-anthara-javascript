@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import Drawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
@@ -104,6 +105,7 @@ export function EmployeeDetailPanel({ employeeId, onClose }) {
 
   return (
     <Drawer anchor="right" open={employeeId != null} onClose={onClose}>
+      <Toolbar />
       <Box role="presentation" sx={{ width: PANEL_WIDTH, p: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h6" component="h2">

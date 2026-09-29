@@ -3,13 +3,13 @@
 const { findMany, findById, create, update, remove } = require('./employees.repository');
 const { findCountryById } = require('../lookups/lookups.repository');
 const { NotFoundError, ValidationError } = require('../shared/errors');
+const { toMinorUnits, toMajorUnits } = require('../shared/money');
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 const DEFAULT_SORT_BY = 'lastName';
 const DEFAULT_SORT_DIR = 'asc';
-const MINOR_UNITS_PER_MAJOR_UNIT = 100;
 const ALLOWED_SORT_BY_VALUES = ['lastName', 'firstName', 'department', 'country', 'jobLevel', 'salary', 'hireDate'];
 const ALLOWED_SORT_DIR_VALUES = ['asc', 'desc'];
 const REQUIRED_EMPLOYEE_FIELDS = [
@@ -42,7 +42,16 @@ function toEnumValue(value, allowedValues, fallback) {
 }
 
 function toEmployeeDto({ salaryMinorUnits, ...rest }) {
-  return { ...rest, salaryMajorUnits: salaryMinorUnits / MINOR_UNITS_PER_MAJOR_UNIT };
+  return { ...rest, salaryMajorUnits: toMajorUnits(salaryMinorUnits) };
+}
+
+function parseEmployeeFilters(queryParams) {
+  return {
+    search: queryParams.search || undefined,
+    departmentId: toOptionalId(queryParams.department),
+    countryId: toOptionalId(queryParams.country),
+    jobLevelId: toOptionalId(queryParams.jobLevel),
+  };
 }
 
 function listEmployees(db, queryParams) {
@@ -56,10 +65,7 @@ function listEmployees(db, queryParams) {
     pageSize,
     sortBy,
     sortDir,
-    search: queryParams.search || undefined,
-    departmentId: toOptionalId(queryParams.department),
-    countryId: toOptionalId(queryParams.country),
-    jobLevelId: toOptionalId(queryParams.jobLevel),
+    ...parseEmployeeFilters(queryParams),
   });
 
   return { items: items.map(toEmployeeDto), total, page, pageSize };
@@ -145,7 +151,7 @@ function toEmployeeUpdateRow(patch) {
     });
 
   if (Object.prototype.hasOwnProperty.call(patch, 'salaryMajorUnits')) {
-    row.salaryMinorUnits = toSalaryMinorUnits(patch.salaryMajorUnits);
+    row.salaryMinorUnits = toMinorUnits(Number(patch.salaryMajorUnits));
   }
 
   return row;
@@ -159,10 +165,6 @@ function resolveCurrencyCode(db, countryId) {
   return country.defaultCurrencyCode;
 }
 
-function toSalaryMinorUnits(salaryMajorUnits) {
-  return Math.round(Number(salaryMajorUnits) * MINOR_UNITS_PER_MAJOR_UNIT);
-}
-
 function createEmployee(db, input) {
   validateEmployeeInput(input);
 
@@ -174,7 +176,7 @@ function createEmployee(db, input) {
     countryId: input.countryId,
     jobLevelId: input.jobLevelId,
     currencyCode: resolveCurrencyCode(db, input.countryId),
-    salaryMinorUnits: toSalaryMinorUnits(input.salaryMajorUnits),
+    salaryMinorUnits: toMinorUnits(Number(input.salaryMajorUnits)),
     hireDate: input.hireDate,
   });
 
@@ -197,4 +199,11 @@ function deleteEmployee(db, id) {
   remove(db, id);
 }
 
-module.exports = { listEmployees, getEmployee, createEmployee, updateEmployee, deleteEmployee, toOptionalId };
+module.exports = {
+  listEmployees,
+  getEmployee,
+  createEmployee,
+  updateEmployee,
+  deleteEmployee,
+  parseEmployeeFilters,
+};

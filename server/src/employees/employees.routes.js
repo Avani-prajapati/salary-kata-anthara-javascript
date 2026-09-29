@@ -7,10 +7,11 @@ const {
   createEmployee,
   updateEmployee,
   deleteEmployee,
-  toOptionalId,
+  parseEmployeeFilters,
 } = require('./employees.service');
 const { iterateMatching } = require('./employees.repository');
 const { writeCsvStream } = require('../shared/csv');
+const { toMajorUnits } = require('../shared/money');
 
 const EMPLOYEE_EXPORT_HEADER = [
   'First name',
@@ -23,7 +24,6 @@ const EMPLOYEE_EXPORT_HEADER = [
   'Salary',
   'Hire date',
 ];
-const MINOR_UNITS_PER_MAJOR_UNIT = 100;
 
 function toEmployeeExportRow(row) {
   return [
@@ -34,7 +34,7 @@ function toEmployeeExportRow(row) {
     row.countryName,
     row.jobLevelLabel,
     row.currencyCode,
-    (row.salaryMinorUnits / MINOR_UNITS_PER_MAJOR_UNIT).toFixed(2),
+    toMajorUnits(row.salaryMinorUnits).toFixed(2),
     row.hireDate,
   ];
 }
@@ -45,15 +45,6 @@ function* toEmployeeExportRows(matchingRows) {
   }
 }
 
-function toEmployeeFilters(queryParams) {
-  return {
-    search: queryParams.search || undefined,
-    departmentId: toOptionalId(queryParams.department),
-    countryId: toOptionalId(queryParams.country),
-    jobLevelId: toOptionalId(queryParams.jobLevel),
-  };
-}
-
 function createEmployeesRouter(db) {
   const router = express.Router();
 
@@ -62,7 +53,7 @@ function createEmployeesRouter(db) {
   });
 
   router.get('/export', (req, res) => {
-    const matchingRows = iterateMatching(db, toEmployeeFilters(req.query));
+    const matchingRows = iterateMatching(db, parseEmployeeFilters(req.query));
     writeCsvStream(res, EMPLOYEE_EXPORT_HEADER, toEmployeeExportRows(matchingRows), 'employees.csv');
   });
 

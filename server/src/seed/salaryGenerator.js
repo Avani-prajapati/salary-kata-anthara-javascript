@@ -1,5 +1,7 @@
 'use strict';
 
+const { toMinorUnits } = require('../shared/money');
+
 const BASE_RANGE_USD_BY_JOB_LEVEL_RANK = {
   1: [40000, 65000],
   2: [60000, 90000],
@@ -30,7 +32,6 @@ const DEPARTMENT_MODIFIER_BY_NAME = {
 };
 
 const VARIANCE_RATIO = 0.1;
-const MINOR_UNITS_PER_MAJOR_UNIT = 100;
 
 function generateSalaryMinorUnits({ jobLevelRank, countryIsoCode, departmentName, random }) {
   const [minBaseSalary, maxBaseSalary] = BASE_RANGE_USD_BY_JOB_LEVEL_RANK[jobLevelRank];
@@ -44,7 +45,7 @@ function generateSalaryMinorUnits({ jobLevelRank, countryIsoCode, departmentName
   const varianceFactor = 1 + (random() * 2 - 1) * VARIANCE_RATIO;
   const majorUnitSalary = Math.round(scaledSalary * varianceFactor);
 
-  return majorUnitSalary * MINOR_UNITS_PER_MAJOR_UNIT;
+  return toMinorUnits(majorUnitSalary);
 }
 
 module.exports = { generateSalaryMinorUnits };

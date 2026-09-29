@@ -1,5 +1,7 @@
 'use strict';
 
+const { toMajorUnits } = require('../shared/money');
+
 const SORT_COLUMN_BY_KEY = {
   lastName: 'e.last_name',
   firstName: 'e.first_name',
@@ -213,11 +215,6 @@ function getHeadcount(db, groupBy) {
 
 const SALARY_DISTRIBUTION_BUCKET_COUNT = 10;
 const LAST_SALARY_DISTRIBUTION_BUCKET_INDEX = SALARY_DISTRIBUTION_BUCKET_COUNT - 1;
-const MINOR_UNITS_PER_MAJOR_UNIT = 100;
-
-function toMajorUnits(minorValue) {
-  return minorValue / MINOR_UNITS_PER_MAJOR_UNIT;
-}
 
 function getSingleBucketDistribution(db, currencyCode, salaryMinorUnits) {
   const { count } = db

@@ -7,9 +7,9 @@ const {
   getDefaultDistributionCurrency,
 } = require('../employees/employees.repository');
 const { ValidationError } = require('../shared/errors');
+const { toMajorUnits } = require('../shared/money');
 
 const GROUP_BY_VALUES = ['department', 'country', 'jobLevel'];
-const MINOR_UNITS_PER_MAJOR_UNIT = 100;
 
 function validateGroupBy(groupBy) {
   if (!GROUP_BY_VALUES.includes(groupBy)) {
@@ -17,10 +17,6 @@ function validateGroupBy(groupBy) {
       { field: 'groupBy', message: `groupBy must be one of ${GROUP_BY_VALUES.join(', ')}` },
     ]);
   }
-}
-
-function toMajorUnits(minorValue) {
-  return minorValue / MINOR_UNITS_PER_MAJOR_UNIT;
 }
 
 function toCompensationStatDto(row) {

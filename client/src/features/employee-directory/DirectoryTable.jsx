@@ -45,7 +45,11 @@ function NoRowsOverlay() {
 
 const DEFAULT_SORT_MODEL = [{ field: 'name', sort: 'asc' }];
 
-export function DirectoryTable({ filters }) {
+function focusableCellFor(target) {
+  return target.closest('[role="gridcell"], [role="rowheader"]');
+}
+
+export function DirectoryTable({ filters, onSelectEmployee = () => {} }) {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: DEFAULT_PAGE_SIZE });
   const [sortModel, setSortModel] = useState(DEFAULT_SORT_MODEL);
 
@@ -83,6 +87,12 @@ export function DirectoryTable({ filters }) {
       onSortModelChange={setSortModel}
       pageSizeOptions={PAGE_SIZE_OPTIONS}
       slots={{ noRowsOverlay: NoRowsOverlay }}
+      onRowClick={(params, event) => onSelectEmployee(params.id, focusableCellFor(event.target))}
+      onCellKeyDown={(params, event) => {
+        if (event.key === 'Enter') {
+          onSelectEmployee(params.id, focusableCellFor(event.target));
+        }
+      }}
     />
   );
 }

@@ -78,4 +78,8 @@ function findMany(db, { page, pageSize, search, departmentId, countryId, jobLeve
   return { items, total };
 }
 
-module.exports = { findMany };
+function findById(db, id) {
+  return db.prepare(`${SELECT_EMPLOYEE_COLUMNS} WHERE e.id = ?`).get(id);
+}
+
+module.exports = { findMany, findById };

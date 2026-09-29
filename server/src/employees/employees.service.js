@@ -1,6 +1,7 @@
 'use strict';
 
-const { findMany } = require('./employees.repository');
+const { findMany, findById } = require('./employees.repository');
+const { NotFoundError } = require('../shared/errors');
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
@@ -52,4 +53,12 @@ function listEmployees(db, queryParams) {
   return { items: items.map(toEmployeeDto), total, page, pageSize };
 }
 
-module.exports = { listEmployees };
+function getEmployee(db, id) {
+  const employee = Number.isInteger(id) ? findById(db, id) : undefined;
+  if (!employee) {
+    throw new NotFoundError('Employee', id);
+  }
+  return toEmployeeDto(employee);
+}
+
+module.exports = { listEmployees, getEmployee };

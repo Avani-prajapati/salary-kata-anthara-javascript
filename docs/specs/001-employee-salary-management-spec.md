@@ -150,9 +150,9 @@ Clicking any row in the directory opens a side panel showing that employee's ful
 
 **Acceptance criteria**
 
-- [ ] **5.3.1** `GET /api/employees/:id` returns the full employee record (all fields from [§3.2](#3-type-ontology)) or `404` with a `{ code: "EMPLOYEE_NOT_FOUND", message }` body when the ID does not exist.
-- [ ] **5.3.2** Clicking a directory row opens the detail panel populated with that row's data without a full-page navigation; the directory table remains visible and scrolled to the same position.
-- [ ] **5.3.3** Closing the panel (via an explicit close control or `Escape`) returns focus to the row that opened it, per the Accessibility Checklist's focus-management rule.
+- [x] **5.3.1** `GET /api/employees/:id` returns the full employee record (all fields from [§3.2](#3-type-ontology)) or `404` with a `{ code: "EMPLOYEE_NOT_FOUND", message }` body when the ID does not exist.
+- [x] **5.3.2** Clicking a directory row opens the detail panel populated with that row's data without a full-page navigation; the directory table remains visible and scrolled to the same position.
+- [x] **5.3.3** Closing the panel (via an explicit close control or `Escape`) returns focus to the row that opened it, per the Accessibility Checklist's focus-management rule.
 
 ### 5.4 Add a new employee
 

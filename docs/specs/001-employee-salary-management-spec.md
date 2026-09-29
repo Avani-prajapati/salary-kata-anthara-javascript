@@ -135,12 +135,12 @@ The HR Manager lands on the Directory page and sees a paginated, sortable table 
 
 **Acceptance criteria**
 
-- [ ] **5.2.1** `GET /api/employees?page&pageSize&search&department&country&jobLevel&sortBy&sortDir` returns a page of matching employees plus a total count, using server-side `LIMIT`/`OFFSET`.
-- [ ] **5.2.2** Typing in the search box filters by case-insensitive substring match on first or last name.
-- [ ] **5.2.3** Selecting a department, country, or job level filter narrows the result set; filters combine with AND semantics and with the active search term.
-- [ ] **5.2.4** Sorting by any visible column (name, department, country, level, salary, hire date) re-orders the server-side query, not just the current page.
-- [ ] **5.2.5** With zero matching rows, the table shows the minimal empty state (centered text + icon) rather than a blank table.
-- [ ] **5.2.6** A request for an out-of-range page (e.g. beyond the last page) returns an empty `items` array with the correct `total`, not a 4xx error.
+- [x] **5.2.1** `GET /api/employees?page&pageSize&search&department&country&jobLevel&sortBy&sortDir` returns a page of matching employees plus a total count, using server-side `LIMIT`/`OFFSET`.
+- [x] **5.2.2** Typing in the search box filters by case-insensitive substring match on first or last name.
+- [x] **5.2.3** Selecting a department, country, or job level filter narrows the result set; filters combine with AND semantics and with the active search term.
+- [x] **5.2.4** Sorting by any visible column (name, department, country, level, salary, hire date) re-orders the server-side query, not just the current page.
+- [x] **5.2.5** With zero matching rows, the table shows the minimal empty state (centered text + icon) rather than a blank table.
+- [x] **5.2.6** A request for an out-of-range page (e.g. beyond the last page) returns an empty `items` array with the correct `total`, not a 4xx error.
 
 ### 5.3 View an employee's detail
 

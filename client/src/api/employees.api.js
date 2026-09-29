@@ -7,3 +7,7 @@ export function getEmployees(params) {
 export function getEmployee(id) {
   return request(`/api/employees/${id}`);
 }
+
+export function createEmployee(payload) {
+  return request('/api/employees', { method: 'POST', body: JSON.stringify(payload) });
+}

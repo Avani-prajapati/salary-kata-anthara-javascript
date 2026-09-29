@@ -1,0 +1,129 @@
+import { Controller, useForm } from 'react-hook-form';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import Button from '@mui/material/Button';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const DEFAULT_VALUES = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  departmentId: '',
+  countryId: '',
+  jobLevelId: '',
+  salaryMajorUnits: '',
+  hireDate: '',
+};
+
+function LookupSelect({ name, label, options, control, rules }) {
+  return (
+    <Controller
+      name={name}
+      control={control}
+      rules={rules}
+      render={({ field, fieldState }) => (
+        <TextField {...field} select label={label} error={Boolean(fieldState.error)} helperText={fieldState.error?.message}>
+          <MenuItem value="">
+            <em>Select {label.toLowerCase()}</em>
+          </MenuItem>
+          {options.map((option) => (
+            <MenuItem key={option.id} value={option.id}>
+              {option.name ?? option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+    />
+  );
+}
+
+export function EmployeeForm({ lookups, onSubmit, submitLabel = 'Add employee', onCancel }) {
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm({ defaultValues: DEFAULT_VALUES });
+
+  return (
+    <Stack component="form" spacing={2} noValidate onSubmit={handleSubmit(onSubmit)}>
+      <TextField
+        label="First name"
+        autoComplete="given-name"
+        error={Boolean(errors.firstName)}
+        helperText={errors.firstName?.message}
+        {...register('firstName', { required: 'First name is required' })}
+      />
+      <TextField
+        label="Last name"
+        autoComplete="family-name"
+        error={Boolean(errors.lastName)}
+        helperText={errors.lastName?.message}
+        {...register('lastName', { required: 'Last name is required' })}
+      />
+      <TextField
+        label="Email"
+        autoComplete="email"
+        error={Boolean(errors.email)}
+        helperText={errors.email?.message}
+        {...register('email', {
+          required: 'Email is required',
+          pattern: { value: EMAIL_PATTERN, message: 'Enter a valid email address' },
+        })}
+      />
+      <LookupSelect
+        name="departmentId"
+        label="Department"
+        options={lookups.departments}
+        control={control}
+        rules={{ required: 'Department is required' }}
+      />
+      <LookupSelect
+        name="countryId"
+        label="Country"
+        options={lookups.countries}
+        control={control}
+        rules={{ required: 'Country is required' }}
+      />
+      <LookupSelect
+        name="jobLevelId"
+        label="Job level"
+        options={lookups.jobLevels}
+        control={control}
+        rules={{ required: 'Job level is required' }}
+      />
+      <TextField
+        label="Salary"
+        type="number"
+        inputProps={{ step: '0.01' }}
+        error={Boolean(errors.salaryMajorUnits)}
+        helperText={errors.salaryMajorUnits?.message}
+        {...register('salaryMajorUnits', {
+          required: 'Salary is required',
+          valueAsNumber: true,
+          validate: (value) => value > 0 || 'Salary must be greater than 0',
+        })}
+      />
+      <TextField
+        label="Hire date"
+        type="date"
+        InputLabelProps={{ shrink: true }}
+        error={Boolean(errors.hireDate)}
+        helperText={errors.hireDate?.message}
+        {...register('hireDate', { required: 'Hire date is required' })}
+      />
+      <Stack direction="row" spacing={1} justifyContent="flex-end">
+        {onCancel && (
+          <Button type="button" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" variant="contained">
+          {submitLabel}
+        </Button>
+      </Stack>
+    </Stack>
+  );
+}

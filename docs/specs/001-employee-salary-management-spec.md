@@ -162,11 +162,11 @@ The HR Manager clicks "Add Employee" on the Directory page, fills a form (name, 
 
 **Acceptance criteria**
 
-- [ ] **5.4.1** `POST /api/employees` with a valid payload creates the employee, assigns a new unique ID, sets `currencyCode` to the chosen country's default (per [invariant 4.4](#4-invariants)), and returns `201` with the created record.
-- [ ] **5.4.2** Submitting the form with a missing required field (name, email, department, country, job level, or salary) is blocked client-side with an inline field error before any request is sent.
-- [ ] **5.4.3** `POST /api/employees` with a missing required field, a malformed email, or a negative salary returns `422` with a `{ code: "VALIDATION_ERROR", fields: [...] }` body listing every invalid field.
-- [ ] **5.4.4** On success, the new employee appears in the directory's current view (if it matches the active filters) without requiring a manual page refresh.
-- [ ] **5.4.5** The salary input accepts a major-unit decimal amount (e.g. `95000.00`) and the API stores it converted to minor units (e.g. `9500000`), per [invariant 4.2](#4-invariants).
+- [x] **5.4.1** `POST /api/employees` with a valid payload creates the employee, assigns a new unique ID, sets `currencyCode` to the chosen country's default (per [invariant 4.4](#4-invariants)), and returns `201` with the created record.
+- [x] **5.4.2** Submitting the form with a missing required field (name, email, department, country, job level, or salary) is blocked client-side with an inline field error before any request is sent.
+- [x] **5.4.3** `POST /api/employees` with a missing required field, a malformed email, or a negative salary returns `422` with a `{ code: "VALIDATION_ERROR", fields: [...] }` body listing every invalid field.
+- [x] **5.4.4** On success, the new employee appears in the directory's current view (if it matches the active filters) without requiring a manual page refresh.
+- [x] **5.4.5** The salary input accepts a major-unit decimal amount (e.g. `95000.00`) and the API stores it converted to minor units (e.g. `9500000`), per [invariant 4.2](#4-invariants).
 
 ### 5.5 Edit an employee's details and salary
 

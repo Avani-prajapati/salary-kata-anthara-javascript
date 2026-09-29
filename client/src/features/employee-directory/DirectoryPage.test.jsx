@@ -17,6 +17,10 @@ vi.mock('./DirectoryFilters', () => ({
   DirectoryFilters: () => null,
 }));
 
+vi.mock('../employee-form/AddEmployeeButton', () => ({
+  AddEmployeeButton: () => null,
+}));
+
 const DIRECTORY_ROW = {
   id: 1,
   firstName: 'Jane',

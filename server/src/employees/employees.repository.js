@@ -82,4 +82,27 @@ function findById(db, id) {
   return db.prepare(`${SELECT_EMPLOYEE_COLUMNS} WHERE e.id = ?`).get(id);
 }
 
-module.exports = { findMany, findById };
+function create(db, row) {
+  const result = db
+    .prepare(
+      `INSERT INTO employees (
+        first_name, last_name, email, department_id, country_id, job_level_id,
+        currency_code, salary_minor_units, hire_date
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(
+      row.firstName,
+      row.lastName,
+      row.email,
+      row.departmentId,
+      row.countryId,
+      row.jobLevelId,
+      row.currencyCode,
+      row.salaryMinorUnits,
+      row.hireDate
+    );
+
+  return result.lastInsertRowid;
+}
+
+module.exports = { findMany, findById, create };

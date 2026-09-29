@@ -1,7 +1,8 @@
 'use strict';
 
-const { findMany, findById } = require('./employees.repository');
-const { NotFoundError } = require('../shared/errors');
+const { findMany, findById, create } = require('./employees.repository');
+const { findCountryById } = require('../lookups/lookups.repository');
+const { NotFoundError, ValidationError } = require('../shared/errors');
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
@@ -11,6 +12,17 @@ const DEFAULT_SORT_DIR = 'asc';
 const MINOR_UNITS_PER_MAJOR_UNIT = 100;
 const ALLOWED_SORT_BY_VALUES = ['lastName', 'firstName', 'department', 'country', 'jobLevel', 'salary', 'hireDate'];
 const ALLOWED_SORT_DIR_VALUES = ['asc', 'desc'];
+const REQUIRED_EMPLOYEE_FIELDS = [
+  'firstName',
+  'lastName',
+  'email',
+  'departmentId',
+  'countryId',
+  'jobLevelId',
+  'salaryMajorUnits',
+  'hireDate',
+];
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function toBoundedInteger(value, { fallback, min, max }) {
   const parsed = Number.parseInt(value, 10);
@@ -61,4 +73,72 @@ function getEmployee(db, id) {
   return toEmployeeDto(employee);
 }
 
-module.exports = { listEmployees, getEmployee };
+function isPresent(value) {
+  return value !== undefined && value !== null && value !== '';
+}
+
+function collectMissingFieldErrors(input) {
+  return REQUIRED_EMPLOYEE_FIELDS.filter((field) => !isPresent(input[field])).map((field) => ({
+    field,
+    message: `${field} is required`,
+  }));
+}
+
+function collectFormatFieldErrors(input) {
+  const errors = [];
+
+  if (isPresent(input.email) && !EMAIL_PATTERN.test(input.email)) {
+    errors.push({ field: 'email', message: 'email must be a valid email address' });
+  }
+
+  if (isPresent(input.salaryMajorUnits) && !(Number(input.salaryMajorUnits) > 0)) {
+    errors.push({ field: 'salaryMajorUnits', message: 'salaryMajorUnits must be greater than 0' });
+  }
+
+  return errors;
+}
+
+function validateEmployeeInput(input) {
+  const missingFieldErrors = collectMissingFieldErrors(input);
+  const fieldsAlreadyReported = new Set(missingFieldErrors.map((error) => error.field));
+  const formatFieldErrors = collectFormatFieldErrors(input).filter(
+    (error) => !fieldsAlreadyReported.has(error.field)
+  );
+  const fields = [...missingFieldErrors, ...formatFieldErrors];
+
+  if (fields.length > 0) {
+    throw new ValidationError(fields);
+  }
+}
+
+function resolveCurrencyCode(db, countryId) {
+  const country = findCountryById(db, countryId);
+  if (!country) {
+    throw new ValidationError([{ field: 'countryId', message: 'countryId does not match a known country' }]);
+  }
+  return country.defaultCurrencyCode;
+}
+
+function toSalaryMinorUnits(salaryMajorUnits) {
+  return Math.round(Number(salaryMajorUnits) * MINOR_UNITS_PER_MAJOR_UNIT);
+}
+
+function createEmployee(db, input) {
+  validateEmployeeInput(input);
+
+  const id = create(db, {
+    firstName: input.firstName,
+    lastName: input.lastName,
+    email: input.email,
+    departmentId: input.departmentId,
+    countryId: input.countryId,
+    jobLevelId: input.jobLevelId,
+    currencyCode: resolveCurrencyCode(db, input.countryId),
+    salaryMinorUnits: toSalaryMinorUnits(input.salaryMajorUnits),
+    hireDate: input.hireDate,
+  });
+
+  return getEmployee(db, id);
+}
+
+module.exports = { listEmployees, getEmployee, createEmployee };
